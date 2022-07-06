@@ -147,7 +147,10 @@ app.post("/delete/:id", function(req, res){
     })
     
 })
-const PORT=3000;
-app.listen(PORT, ()=>{
-    console.log(`Server is running on port ${PORT}`);
-});
+let port = process.env.PORT;
+if (port == null || port == "") {
+  port = 3000;
+}
+app.listen(port,()=>{
+    console.log(`listening on port ${port}....`)
+})
