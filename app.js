@@ -8,7 +8,9 @@ app=express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(express.static("public"));
-mongoose.connect('mongodb://localhost:27017/todoDb');
+
+//mongoose.connect("mongodb://localhost:27017/todoDb");
+mongoose.connect("mongodb+srv://publicUser:gammugum@giantbear.zhoxbpj.mongodb.net/todoDb?retryWrites=true&w=majority");
 
 
 // SCHEMAS
@@ -70,9 +72,10 @@ app.post("/", function(req, res){
         }
         else{
             console.log("item added sucessfully");
+            res.redirect("/");
         }
     });
-        res.redirect("/");
+       
 })
 
 app.post("/delete", function(req, res){
@@ -82,9 +85,10 @@ app.post("/delete", function(req, res){
         }
         else{
             console.log("item deleted Sucessfully");
+            res.redirect("/");
         }
     });
-    res.redirect("/");
+    
 })
 
 
@@ -99,17 +103,17 @@ app.get("/:id", function(req, res){
                 name: route,
                 items: []
             });
-            list.save();
+            list.save(function(err){
+                res.render("list", {Today: route,  Items: itemNames, Path:"/"+route});
+            });
             
-            res.render("list", {Today: route,  Items: itemNames, Path:"/"+route});
+           
         }    
         else{
             var foundItems=foundList[0].items;
-            console.log(foundItems);
             for(var i=0;i<foundItems.length;i++){
                 itemNames.push(foundItems[i]);
             }
-            console.log(itemNames);
             res.render("list", {Today: route,  Items: itemNames, Path:"/"+route});
          }      
     });
@@ -119,28 +123,25 @@ app.get("/:id", function(req, res){
 app.post("/:id", function(req, res){
     var item=req.body.newItem;
     var route = req.params.id;
-        List.find({name: route}, function(err, foundList){
-            foundList[0].items.push({name: item});
-            foundList[0].save();
+        List.findOne({name: route}, function(err, foundList){
+            foundList.items.push({name: item});
+            foundList.save(function(err){
+                res.redirect("/"+route);
+            });
+            
         })
-        res.redirect("/"+route);
+        
 })
 
 
 app.post("/delete/:id", function(req, res){
     var itemId=req.body.checkbox;
     var route = req.params.id;
-    List.find({name: route}, function(err, foundList){
+    List.findOneAndUpdate({name: route}, {$pull: {items: {_id: itemId}}}, function(err, foundList){
         if(err){
             console.log(err);
         }
         else{
-            var listItems=foundList[0].items;
-            var index = listItems.indexOf({_id: itemId});
-            listItems.splice(index, 1);
-            foundList[0].save();
-            console.log("item deleted Sucessfully");
-            console.log(listItems);
             res.redirect("/"+route);
         }
     })
